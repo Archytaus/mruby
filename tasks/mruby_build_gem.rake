@@ -12,7 +12,7 @@ module MRuby
       if gemdir.is_a?(Hash)
         gemdir = load_special_path_gem(gemdir)
       else
-        gemdir = File.expand_path(gemdir, caller_dir)
+        gemdir = File.expand_path(gemdir, gem_clone_dir)
       end
       gemrake = File.join(gemdir, "mrbgem.rake")
 
