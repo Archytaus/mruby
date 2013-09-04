@@ -612,13 +612,57 @@ mrb_hash_each_key(mrb_state *mrb, mrb_value hash)
 
   for (k = kh_begin(h); k != kh_end(h); k++) {
     if (!kh_exist(h,k)) continue;
-    mrb_value v = kh_key(h,k);
-    mrb_funcall(mrb, blk, "call", 1, v);
+    mrb_value key = kh_key(h,k);
+    mrb_funcall(mrb, blk, "call", 1, key);
   }
 
   return hash;
 }
 
+/* 15.2.13.4.11 */
+/* 
+ * Calls the given block for each element of +self+
+ * and pass the value of each element.
+ * 
+ * call-seq:
+ *   hsh.each_value {| value | block } -> hsh
+ *   hsh.each_value                    -> an_enumerator
+ * 
+ * If no block is given, an enumerator is returned instead.
+ * 
+ *  h = { "a" => 100, "b" => 200 }
+ *  h.each_value {|value| puts value }
+ * 
+ * <em>produces:</em>
+ * 
+ *  100
+ *  200
+ *
+ */
+
+mrb_value
+mrb_hash_each_value(mrb_state *mrb, mrb_value hash)
+{
+  khash_t(ht) *h = RHASH_TBL(hash);
+  khiter_t k;
+  mrb_value blk;
+
+  if (!h) return hash;
+
+  mrb_get_args(mrb, "&", &blk);
+
+  if (mrb_nil_p(blk)) {
+    mrb_raise(mrb, E_ARGUMENT_ERROR, "no block given");
+  }
+
+  for (k = kh_begin(h); k != kh_end(h); k++) {
+    if (!kh_exist(h,k)) continue;
+    mrb_value value = kh_value(h,k);
+    mrb_funcall(mrb, blk, "call", 1, value);
+  }
+
+  return hash;
+}
 
 /*
  *  call-seq:
@@ -1283,6 +1327,8 @@ mrb_init_hash(mrb_state *mrb)
   mrb_define_method(mrb, h, "default_proc",    mrb_hash_default_proc,MRB_ARGS_NONE()); /* 15.2.13.4.7  */
   mrb_define_method(mrb, h, "default_proc=",   mrb_hash_set_default_proc,MRB_ARGS_REQ(1)); /* 15.2.13.4.7  */
   mrb_define_method(mrb, h, "__delete",        mrb_hash_delete,      MRB_ARGS_REQ(1)); /* core of 15.2.13.4.8  */
+  mrb_define_method(mrb, h, "each_key",        mrb_hash_each_key,    MRB_ARGS_REQ(1)); /* 15.2.13.4.10 */
+  mrb_define_method(mrb, h, "each_value",      mrb_hash_each_value,  MRB_ARGS_REQ(1)); /* 15.2.13.4.11 */
   mrb_define_method(mrb, h, "empty?",          mrb_hash_empty_p,     MRB_ARGS_NONE()); /* 15.2.13.4.12 */
   mrb_define_method(mrb, h, "has_key?",        mrb_hash_has_key,     MRB_ARGS_REQ(1)); /* 15.2.13.4.13 */
   mrb_define_method(mrb, h, "has_value?",      mrb_hash_has_value,   MRB_ARGS_REQ(1)); /* 15.2.13.4.14 */
@@ -1299,8 +1345,6 @@ mrb_init_hash(mrb_state *mrb)
   mrb_define_method(mrb, h, "store",           mrb_hash_aset,        MRB_ARGS_REQ(2)); /* 15.2.13.4.26 */
   mrb_define_method(mrb, h, "value?",          mrb_hash_has_value,   MRB_ARGS_REQ(1)); /* 15.2.13.4.27 */
   mrb_define_method(mrb, h, "values",          mrb_hash_values,      MRB_ARGS_NONE()); /* 15.2.13.4.28 */
-
-  mrb_define_method(mrb, h, "each_key",        mrb_hash_each_key,   MRB_ARGS_REQ(1)); /* 15.2.13.4.27 */
 
   mrb_define_method(mrb, h, "to_hash",         mrb_hash_to_hash,     MRB_ARGS_NONE()); /* 15.2.13.4.29 (x)*/
   mrb_define_method(mrb, h, "inspect",         mrb_hash_inspect,     MRB_ARGS_NONE()); /* 15.2.13.4.30 (x)*/

@@ -48,30 +48,6 @@ class Hash
   end
 
   ##
-  # Calls the given block for each element of +self+
-  # and pass the value of each element.
-  #
-  # call-seq:
-  #   hsh.each_value {| value | block } -> hsh
-  #   hsh.each_value                    -> an_enumerator
-  #
-  # If no block is given, an enumerator is returned instead.
-  #
-  #  h = { "a" => 100, "b" => 200 }
-  #  h.each_value {|value| puts value }
-  #
-  # <em>produces:</em>
-  #
-  #  100
-  #  200
-  #
-  # ISO 15.2.13.4.11
-  def each_value(&block)
-    self.keys.each{|k| block.call(self[k])}
-    self
-  end
-
-  ##
   # Create a direct instance of the class Hash.
   #
   # ISO 15.2.13.4.16
