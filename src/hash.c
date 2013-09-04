@@ -574,6 +574,52 @@ mrb_hash_shift(mrb_state *mrb, mrb_value hash)
   }
 }
 
+/* 15.2.13.4.10 */
+/* 
+ * Calls the given block for each element of +self+
+ * and pass the key of each element.
+ *
+ * call-seq:
+ *   hsh.each_key {| key | block } -> hsh
+ *   hsh.each_key                  -> an_enumerator
+ *
+ * If no block is given, an enumerator is returned instead.
+ *
+ *   h = { "a" => 100, "b" => 200 }
+ *   h.each_key {|key| puts key }
+ *
+ * <em>produces:</em>
+ *
+ *  a
+ *  b
+ *
+ */
+
+mrb_value
+mrb_hash_each_key(mrb_state *mrb, mrb_value hash)
+{
+  khash_t(ht) *h = RHASH_TBL(hash);
+  khiter_t k;
+  mrb_value blk;
+
+  if (!h) return hash;
+
+  mrb_get_args(mrb, "&", &blk);
+
+  if (mrb_nil_p(blk)) {
+    mrb_raise(mrb, E_ARGUMENT_ERROR, "no block given");
+  }
+
+  for (k = kh_begin(h); k != kh_end(h); k++) {
+    if (!kh_exist(h,k)) continue;
+    mrb_value v = kh_key(h,k);
+    mrb_funcall(mrb, blk, "call", 1, v);
+  }
+
+  return hash;
+}
+
+
 /*
  *  call-seq:
  *     hsh.delete_if {| key, value | block }  -> hsh
@@ -1253,6 +1299,8 @@ mrb_init_hash(mrb_state *mrb)
   mrb_define_method(mrb, h, "store",           mrb_hash_aset,        MRB_ARGS_REQ(2)); /* 15.2.13.4.26 */
   mrb_define_method(mrb, h, "value?",          mrb_hash_has_value,   MRB_ARGS_REQ(1)); /* 15.2.13.4.27 */
   mrb_define_method(mrb, h, "values",          mrb_hash_values,      MRB_ARGS_NONE()); /* 15.2.13.4.28 */
+
+  mrb_define_method(mrb, h, "each_key",        mrb_hash_each_key,   MRB_ARGS_REQ(1)); /* 15.2.13.4.27 */
 
   mrb_define_method(mrb, h, "to_hash",         mrb_hash_to_hash,     MRB_ARGS_NONE()); /* 15.2.13.4.29 (x)*/
   mrb_define_method(mrb, h, "inspect",         mrb_hash_inspect,     MRB_ARGS_NONE()); /* 15.2.13.4.30 (x)*/
